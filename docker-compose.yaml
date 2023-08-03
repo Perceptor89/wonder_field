@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["sh", "/app/Scripts/backend.sh"]
+    ports:
+      - 8000:8000
+    volumes:
+      # - .:/app
+      - wf_static:/app/static
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - postgres
+  redis:
+    image: redis
+    container_name: redis
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - wf_redis:/data
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - wf_db:/var/lib/postgresql/data
+
+volumes:
+  wf_db:
+  wf_static:
+  wf_redis:
