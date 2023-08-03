@@ -10,7 +10,8 @@ class TGUserAdmin(admin.ModelAdmin):
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    fields = ['chat_id', 'question', 'gafrom django.contrib.auth.admin import UserAdminid', 'game_state', 'word_state',
+    fields = ['chat_id', 'question', 'game_state']
+    list_display = ['chat_id', 'message_id', 'game_state', 'word_state',
                     'question', 'created_at']
     empty_value_display = '-empty-'
 
