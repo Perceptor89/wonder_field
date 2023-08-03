@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class TGUser(AbstractUser):
-    tg_id = models.IntegerField(blank=False, unique=True, null=False)
+    tg_id = models.BigIntegerField(blank=False, unique=True, null=False)
     REQUIRED_FIELDS = ['tg_id']
 
     def __str__(self):
@@ -28,7 +28,7 @@ class Game(models.Model):
         ('G', 'guessing'),
         ('F', 'finished'),
     ]
-    chat_id = models.IntegerField(blank=False, null=False)
+    chat_id = models.BigIntegerField(blank=False, null=False)
     question = models.ForeignKey('Question', null=True,
                                  on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)

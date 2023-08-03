@@ -63,15 +63,15 @@ def get_request_dict(chat_id: int, text: str = None, keyboard: dict = None,
 
 
 def build_mention(username: str, points: int | None = None) -> str:
-    username = hide_symbols(username)
+    # username = hide_symbols(username)
     mention = f'@{username}'
     if points is not None:
-        mention = f'{mention} \\[{points}\\]'
+        mention = f'{mention} [{points}]'
     return mention
 
 
 def hide_symbols(text: str) -> str:
-    for s in '.!|-_':
+    for s in '.!|-_[]':
         text = text.replace(s, f'\\{s}')
 
     return text

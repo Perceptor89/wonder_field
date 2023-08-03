@@ -6,6 +6,7 @@ from time import sleep
 from celery import current_app as ca
 from celery.exceptions import Terminated
 from django.db import transaction
+from django.db.models import Q
 from dotenv import load_dotenv
 
 from tg.sender import send_request
@@ -49,7 +50,9 @@ def add_context(game: Game, text: str, word: bool = False,
     if turn:
         turn = game.scores.all().filter(is_turn=True).get()
         username = turn.player.username
-        turn_line = '__ходит {}__'.format(utils.build_mention(username))
+        mention = utils.build_mention(username)
+        mention = utils.hide_symbols(mention)
+        turn_line = '__ходит {}__'.format(mention)
         text = '{}\n\n{}'.format(turn_line, text)
 
     if word:
@@ -63,12 +66,15 @@ def add_context(game: Game, text: str, word: bool = False,
         text = text + d_str
 
     if members:
-        scores = game.scores.all()
-        if scores.exists():
-            score_strs = [utils.build_mention(s.player.username,
-                          s.earned_points) for s in scores]
-            score_strs = ' | '.join(score_strs)
-            text = f'{text}\n\n{score_strs}'
+        scores = game.scores.order_by('-earned_points').all()
+        lines = []
+        for s in scores:
+            mention = utils.build_mention(s.player.username, s.earned_points)
+            mention = utils.hide_symbols(mention)
+            lines.append(mention)
+        if lines:
+            lines = ' \\| '.join(lines)
+            text = f'{text}\n\n{lines}'
 
     return text
 
@@ -128,6 +134,7 @@ def process_message_update(message: dcs.Message) -> dict | None:
         else:
             turn = get_turn(game)
             if not turn:
+                no_winner_msg(game)
                 end_game(game)
             else:
                 turn = get_wheel_points(turn)
@@ -284,11 +291,9 @@ def start_guessing(game: Game) -> None:
 
 def get_turn(game: Game) -> Score | None:
     with transaction.atomic():
-        members = game.scores.order_by('id')\
-            .filter(is_active=True)\
-            .select_for_update()
-        if not members.exists():
-            return
+        members = game.scores.select_for_update()\
+            .filter(Q(is_active=True) | Q(is_turn=True))\
+            .order_by('id')
 
         last_turn = members.filter(is_turn=True)
         if last_turn.exists():
@@ -304,10 +309,20 @@ def get_turn(game: Game) -> Score | None:
         else:
             cur_turn = members.earliest('id')
 
+        if cur_turn.is_active is False:
+            return
+
         cur_turn.is_turn = True
         cur_turn.save()
 
     return cur_turn
+
+
+def no_winner_msg(game: Game):
+    text = 'Ни у кого не получилось разгадать слово 🤔'
+    text = add_context(game, text)
+    build_send_check_pause(game.chat_id, 'editMessageText', text,
+                           message_id=game.message_id)
 
 
 def get_wheel_points(score: Score) -> Score:
@@ -451,20 +466,18 @@ def end_game(game: Game, w_score: Score = None) -> None:
         build_send_check_pause(game.chat_id, 'editMessageText',
                                text, message_id=game.message_id)
 
-    title = f'<u>Итоги игры: {game.id}</u>'
-    c_w = 15
+    title = f'__Итоги игры: {game.id}__'
+    members = game.scores.order_by('-earned_points').all()
     table = []
-    table.append('|{:^{count}}|{:^{count}}|'
-                 .format('Участник', 'Очки', count=c_w))
-    table.append('|{}|{}|'.format('-' * c_w, '-' * c_w))
-    for s in game.scores.order_by('-earned_points').all():
-        table.append('|{:^{count}}|{:^{count}}|'
-                     .format(s.player.username, s.earned_points, count=c_w))
+    for m in members:
+        mention = utils.build_mention(m.player.username, m.earned_points)
+        mention = utils.hide_symbols(mention)
+        table.append('  {}'.format(mention))
     table = "\n".join(table)
     last_word = 'Благодарим всех участников 😎'
-    text = f'{title}\n\n<pre>{table}</pre>\n\n{last_word}'
+    text = f'{title}\n\n{table}\n\n{last_word}'
 
-    build_send_check_pause(game.chat_id, 'editMessageText', parse_mode='HTML',
+    build_send_check_pause(game.chat_id, 'editMessageText',
                            text=text, message_id=game.message_id)
 
     request = utils.get_request_dict(game.chat_id, message_id=game.message_id)

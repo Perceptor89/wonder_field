@@ -4,13 +4,12 @@ import os
 import logging
 
 
-load_dotenv()
+BOT_TOKEN=os.getenv('BOT_TOKEN')
 
 
 def send_request(method: str, params: dict):
     logging.info(f'Params to send: {params}')
-    token = os.getenv('BOT_TOKEN')
-    url = f"https://api.telegram.org/bot{token}/{method}"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
 
     with requests.session() as session:
         with session.get(url, json=params) as resp:

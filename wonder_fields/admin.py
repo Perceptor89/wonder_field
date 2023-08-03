@@ -29,3 +29,4 @@ class ScoreAdmin(admin.ModelAdmin):
     list_display = ['game', 'player', 'earned_points', 'wheel_points',
                     'answer_type', 'is_active', 'is_turn']
     empty_value_display = '-empty-'
+    list_filter = ['game']
