@@ -70,8 +70,8 @@ def build_mention(username: str, points: int | None = None) -> str:
     return mention
 
 
-def hide_symbols(text: str) -> str:
-    for s in '.!|-_[]':
+def hide_symbols(text: str, symbols: str = '.!|-_[]') -> str:
+    for s in symbols:
         text = text.replace(s, f'\\{s}')
 
     return text

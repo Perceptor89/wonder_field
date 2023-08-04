@@ -84,7 +84,11 @@ def process_message_update(message: dcs.Message) -> dict | None:
     message_id = message.message_id
     tg_id = message.from_.id
 
-    if message.text in ['/start_game', '/start_game@kts_game_master_bot']:
+    if message.text in ['/info', '/start']:
+        build_send_check_pause(chat_id, 'deleteMessage', message_id=message_id,
+                               sleep_time=0)
+        info_message(chat_id)
+    elif message.text in ['/start_game', '/start_game@kts_game_master_bot']:
         build_send_check_pause(chat_id, 'deleteMessage', message_id=message_id,
                                sleep_time=0)
         game = process_start(chat_id)
@@ -182,6 +186,20 @@ def process_callback_update(callback: dcs.Callback) -> None:
     elif callback.data == 'end_game_no':
         build_send_check_pause(chat_id, 'deleteMessage', message_id=message_id,
                                sleep_time=0)
+        
+
+def info_message(chat_id: int) -> None:
+    lines = []
+    lines.append('Привет! Я ведущий игры *"Что это?" \\| "What is it?"*')
+    lines.append('*. Одиночный режим*\n_Жми /start\\_game для быстрой игры._')
+    lines.append('*. Специальная группа*\n_Здесь можно поиграть в компании._\n'
+                '||https://t.me/+UXsORPxGCLo5ODRi||')
+    lines.append('*. Играй с друзьями*\n_Добавь меня в группу и повысь до админа,'
+                ' чтобы играть с друзьями._')
+
+    text = '\n\n'.join(lines)
+    text = utils.hide_symbols(text, '?!.+')
+    build_send_check_pause(chat_id, 'sendMessageText', text, sleep_time=0)
 
 
 def process_start(chat_id: int) -> Game | None:
@@ -468,14 +486,18 @@ def end_game(game: Game, w_score: Score = None) -> None:
 
     title = f'__Итоги игры: {game.id}__'
     members = game.scores.order_by('-earned_points').all()
-    table = []
-    for m in members:
-        mention = utils.build_mention(m.player.username, m.earned_points)
-        mention = utils.hide_symbols(mention)
-        table.append('  {}'.format(mention))
-    table = "\n".join(table)
-    last_word = 'Благодарим всех участников 😎'
-    text = f'{title}\n\n{table}\n\n{last_word}'
+    if members:
+        table = []
+        for m in members:
+            mention = utils.build_mention(m.player.username, m.earned_points)
+            mention = utils.hide_symbols(mention)
+            table.append('  {}'.format(mention))
+        table = "\n".join(table)
+        last_word = 'Благодарим всех участников 😎'
+        text = f'{title}\n\n{table}\n\n{last_word}'
+    else:
+        last_word = 'В игре никто не участвовал 🙅🏼‍♂️'
+        text = f'{title}\n\n{last_word}'
 
     build_send_check_pause(game.chat_id, 'editMessageText',
                            text=text, message_id=game.message_id)
