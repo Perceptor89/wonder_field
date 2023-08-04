@@ -7,10 +7,7 @@ services:
       dockerfile: Dockerfile
     entrypoint: ["sh", "/app/Scripts/backend.sh"]
     ports:
-      - 8000:8000
-    volumes:
-      # - .:/app
-      - wf_static:/app/static
+      - 80:8000
     env_file:
       - ./.env
     depends_on:
@@ -34,5 +31,4 @@ services:
 
 volumes:
   wf_db:
-  wf_static:
   wf_redis:

@@ -12,9 +12,9 @@ celery-start:
 	python -m celery -A django_app worker -l info
 
 project-run:
-	docker-compose up --build -d
-	docker exec -d -it backend python -m celery -A django_app worker -l info
-	docker exec -d -it backend python manage.py poller_start
+	sudo docker-compose up --build -d
+	sudo docker exec -d -it backend python -m celery -A django_app worker -l info
+	sudo docker exec -d -it backend python manage.py poller_start
 
 project-stop:
-	docker-compose down
+	sudo docker-compose down
