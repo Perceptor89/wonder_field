@@ -199,7 +199,7 @@ def info_message(chat_id: int) -> None:
 
     text = '\n\n'.join(lines)
     text = utils.hide_symbols(text, '?!.+')
-    build_send_check_pause(chat_id, 'sendMessageText', text, sleep_time=0)
+    build_send_check_pause(chat_id, 'sendMessage', text, sleep_time=0)
 
 
 def process_start(chat_id: int) -> Game | None:
