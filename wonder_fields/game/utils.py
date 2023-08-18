@@ -62,11 +62,17 @@ def get_request_dict(chat_id: int, text: str = None, keyboard: dict = None,
     return message
 
 
-def build_mention(username: str, points: int | None = None) -> str:
-    # username = hide_symbols(username)
-    mention = f'@{username}'
+def build_mention(player, points: int | None = None) -> str:
+    player = player.get()
+
+    if not player.username:
+        mention = player.first_name
+    else:
+        mention = f'@{player.username}'
+
     if points is not None:
         mention = f'{mention} [{points}]'
+
     return mention
 
 

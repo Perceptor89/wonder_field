@@ -18,3 +18,6 @@ project-run:
 
 project-stop:
 	sudo docker-compose down
+
+server:
+	ssh perceptor@185.250.205.16

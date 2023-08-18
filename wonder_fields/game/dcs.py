@@ -10,7 +10,7 @@ class MessageFrom:
     id: int
     is_bot: bool
     first_name: str
-    username: str
+    username: Optional[str]
     last_name: Optional[str]
 
     class Meta:

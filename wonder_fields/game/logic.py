@@ -49,8 +49,8 @@ def add_context(game: Game, text: str, word: bool = False,
 
     if turn:
         turn = game.scores.all().filter(is_turn=True).get()
-        username = turn.player.username
-        mention = utils.build_mention(username)
+        player = turn.player
+        mention = utils.build_mention(player)
         mention = utils.hide_symbols(mention)
         turn_line = '__ходит {}__'.format(mention)
         text = '{}\n\n{}'.format(turn_line, text)
@@ -69,7 +69,7 @@ def add_context(game: Game, text: str, word: bool = False,
         scores = game.scores.order_by('-earned_points').all()
         lines = []
         for s in scores:
-            mention = utils.build_mention(s.player.username, s.earned_points)
+            mention = utils.build_mention(s.player, s.earned_points)
             mention = utils.hide_symbols(mention)
             lines.append(mention)
         if lines:
@@ -416,7 +416,7 @@ def process_answer_text(score_id: int,
         score = Score.objects.filter(id=score_id).select_for_update().get()
         game = score.game
         word = game.question.word
-        username = score.player.username
+        player = score.player
 
         if score.answer_type == 'l':
             if not utils.is_cyrillic(answer) or len(answer) > 1:
@@ -435,7 +435,7 @@ def process_answer_text(score_id: int,
                                                        answer)
                 game.save()
                 text = 'Есть буква *{}*!\n{} зарабатывает {} очков 👍'.format(
-                    answer, utils.build_mention(username), wheel_points
+                    answer, utils.build_mention(player), wheel_points
                 )
                 is_right = True
             else:
@@ -453,7 +453,7 @@ def process_answer_text(score_id: int,
                 is_right = True
             else:
                 text = 'Слово не разгадано. {} выбывает 👋'.format(
-                    utils.build_mention(username),
+                    utils.build_mention(player),
                 )
                 score.is_active = False
                 is_right = False
@@ -478,7 +478,7 @@ def end_game(game: Game, w_score: Score = None) -> None:
 
     if w_score:
         text = 'Поздравляем {} c победой 🥇'.format(
-            utils.build_mention(w_score.player.username),
+            utils.build_mention(w_score.player),
         )
         text = add_context(game, text)
         build_send_check_pause(game.chat_id, 'editMessageText',
@@ -489,7 +489,7 @@ def end_game(game: Game, w_score: Score = None) -> None:
     if members:
         table = []
         for m in members:
-            mention = utils.build_mention(m.player.username, m.earned_points)
+            mention = utils.build_mention(m.player, m.earned_points)
             mention = utils.hide_symbols(mention)
             table.append('  {}'.format(mention))
         table = "\n".join(table)
